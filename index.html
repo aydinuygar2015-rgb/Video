@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ultra Animasyonlu Video Yükleyici</title>
+  <style>
+    /* ======================================================
+       GLOBAL STYLES & CORE RESET
+       ====================================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #030712;
+      color: #fff;
+      overflow: hidden;
+      perspective: 1000px;
+    }
+
+    /* Ambient Background Canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Floating Ambient Light Blobs */
+    .glow-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.6;
+      animation: floatGlow 10s ease-in-out infinite alternate;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .blob-1 {
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, #7928ca, #ff0080);
+      top: 15%;
+      left: 20%;
+    }
+
+    .blob-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #00f2fe, #4facfe);
+      bottom: 10%;
+      right: 15%;
+      animation-delay: -5s;
+    }
+
+    @keyframes floatGlow {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 40px) scale(1.15); }
+    }
+
+    /* ======================================================
+       ULTRA GLASS CARD & 3D TILT CONTAINER
+       ====================================================== */
+    .card-wrapper {
+      position: relative;
+      z-index: 10;
+      transition: transform 0.15s ease-out;
+      transform-style: preserve-3d;
+    }
+
+    .card {
+      position: relative;
+      width: 460px;
+      padding: 40px 32px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 28px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                  inset 0 0 20px rgba(0, 242, 254, 0.05);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      overflow: hidden;
+    }
+
+    /* Glowing Rotating Border Gradient */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 30px;
+      padding: 2px;
+      background: conic-gradient(from var(--angle, 0deg), #ff0080, #7928ca, #00f2fe, #ff0080);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: spinBorder 6s linear infinite;
+      pointer-events: none;
+    }
+
+    @property --angle {
+      syntax: '<angle>';
+      initial-value: 0deg;
+      inherits: false;
+    }
+
+    @keyframes spinBorder {
+      to { --angle: 360deg; }
+    }
+
+    /* Header Typography */
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+
+    /* ======================================================
+       ULTRA ANIMATED BUTTON
+       ====================================================== */
+    .btn-container {
+      position: relative;
+      width: 100%;
+    }
+
+    .ultra-btn {
+      position: relative;
+      width: 100%;
+      padding: 18px 28px;
+      border: none;
+      outline: none;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #00f2fe 0%, #4facfe 50%, #60a5fa 100%);
+      background-size: 200% 200%;
+      color: #030712;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 10px 25px -5px rgba(0, 242, 254, 0.5),
+                  0 0 30px rgba(79, 172, 254, 0.3);
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+    }
+
+    .ultra-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 18px 35px -5px rgba(0, 242, 254, 0.7),
+                  0 0 50px rgba(79, 172, 254, 0.5);
+      background-position: 100% 0;
+    }
+
+    .ultra-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    /* Button Shiny Reflection Overlay */
+    .ultra-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -60%;
+      width: 50%;
+      height: 200%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.6) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      transform: rotate(25deg);
+      transition: all 0.6s ease;
+    }
+
+    .ultra-btn:hover::after {
+      left: 120%;
+    }
+
+    .btn-icon {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+      transition: transform 0.3s ease;
+    }
+
+    .ultra-btn:hover .btn-icon {
+      transform: scale(1.2) rotate(10deg);
+    }
+
+    /* ======================================================
+       PROGRESS BAR & STATUS SECTION
+       ====================================================== */
+    .progress-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .status-text {
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #64748b;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .status-dot.active {
+      background: #00f2fe;
+      box-shadow: 0 0 12px #00f2fe, 0 0 24px #00f2fe;
+      animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+
+    .percent-text {
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #00f2fe;
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+    }
+
+    /* Track Container */
+    .progress-track {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 12px;
+      padding: 3px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8),
+                  0 0 1px rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+
+    /* Dynamic Liquid Fill Bar */
+    .progress-fill {
+      position: relative;
+      width: 0%;
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #ff0080, #7928ca, #00f2fe, #4facfe);
+      background-size: 300% 100%;
+      animation: liquidFlow 2s linear infinite;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
+      transition: width 0.15s ease-out;
+    }
+
+    @keyframes liquidFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    /* Energy Leading Edge Tip */
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 12px;
+      background: #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 15px #fff, 0 0 25px #00f2fe, 0 0 35px #ff0080;
+      animation: spark 0.8s infinite alternate;
+    }
+
+    @keyframes spark {
+      0% { opacity: 0.7; transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ======================================================
+       VIDEO PLAYER EMBED CONTAINER
+       ====================================================== */
+    .video-wrapper {
+      width: 100%;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .video-wrapper.show {
+      max-height: 260px;
+      opacity: 1;
+      margin-top: 10px;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Interactive Canvas Particles Background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Ambient Light Blobs -->
+  <div class="glow-blob blob-1"></div>
+  <div class="glow-blob blob-2"></div>
+
+  <!-- Main 3D Glassmorphism Card -->
+  <div class="card-wrapper" id="cardWrapper">
+    <div class="card">
+      <div class="card-title">Video</div>
+
+      <!-- Video Action Button -->
+      <div class="btn-container">
+        <button class="ultra-btn" id="loadBtn">
+          <svg class="btn-icon" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <span id="btnText">VİDEO YÜKLE & BAŞLAT</span>
+        </button>
+      </div>
+
+      <!-- Ultra Dynamic Progress Bar -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <div class="status-text">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusLabel">Hazır</span>
+          </div>
+          <div class="percent-text" id="percentText">%0</div>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- Embedded Video Player -->
+      <div class="video-wrapper" id="videoWrapper">
+        <video id="videoPlayer" controls playsinline></video>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ======================================================
+       1. CANVAS PARTICLE SYSTEM WITH MOUSE PHYSICS
+       ====================================================== */
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let particles = [];
+    let mouse = { x: null, y: null, radius: 150 };
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.size = Math.random() * 2.5 + 1;
+        this.baseX = this.x;
+        this.baseY = this.y;
+        this.vx = (Math.random() - 0.5) * 0.8;
+        this.vy = (Math.random() - 0.5) * 0.8;
+        this.color = Math.random() > 0.5 ? '#00f2fe' : '#ff0080';
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = this.color;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+
+        // Mouse interaction physics
+        if (mouse.x !== null && mouse.y !== null) {
+          let dx = mouse.x - this.x;
+          let dy = mouse.y - this.y;
+          let distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < mouse.radius) {
+            let force = (mouse.radius - distance) / mouse.radius;
+            let dirX = dx / distance;
+            let dirY = dy / distance;
+            this.x -= dirX * force * 3;
+            this.y -= dirY * force * 3;
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < 70; i++) {
+      particles.push(new Particle());
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    /* ======================================================
+       2. 3D CARD TILT EFFECT ON MOUSEMOVE
+       ====================================================== */
+    const cardWrapper = document.getElementById('cardWrapper');
+
+    window.addEventListener('mousemove', (e) => {
+      const xAxis = (window.innerWidth / 2 - e.clientX) / 25;
+      const yAxis = (window.innerHeight / 2 - e.clientY) / 25;
+      cardWrapper.style.transform = `rotateY(${-xAxis}deg) rotateX(${yAxis}deg)`;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      cardWrapper.style.transform = `rotateY(0deg) rotateX(0deg)`;
+    });
+
+    /* ======================================================
+       3. VIDEO DOWNLOAD & ULTRA PROGRESS BAR LOGIC
+       ====================================================== */
+    const loadBtn = document.getElementById('loadBtn');
+    const btnText = document.getElementById('btnText');
+    const progressFill = document.getElementById('progressFill');
+    const percentText = document.getElementById('percentText');
+    const statusDot = document.getElementById('statusDot');
+    const statusLabel = document.getElementById('statusLabel');
+    const videoWrapper = document.getElementById('videoWrapper');
+    const videoPlayer = document.getElementById('videoPlayer');
+
+    let isDownloading = false;
+
+    loadBtn.addEventListener('click', () => {
+      if (isDownloading) return;
+      isDownloading = true;
+
+      // Update UI state
+      btnText.textContent = "İNDİRİLİYOR...";
+      statusDot.classList.add('active');
+      statusLabel.textContent = "Veri Akışı Yapılıyor...";
+      loadBtn.style.opacity = "0.7";
+      loadBtn.style.cursor = "not-allowed";
+
+      const xhr = new XMLHttpRequest();
+      // 'video.mp4' dosyasını hedef alıyoruz
+      xhr.open('GET', 'video.mp4', true);
+      xhr.responseType = 'blob';
+
+      // İndirme aşamasını (Progress Event) dinamik yakala
+      xhr.onprogress = function (e) {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          updateProgress(percent);
+        } else {
+          // Toplam boyut bilinemiyorsa (ör. sunucu headerı eksikse) simüle edilmiş smooth artış
+          let current = parseInt(percentText.textContent.replace('%', '')) || 0;
+          if (current < 90) {
+            updateProgress(current + 5);
+          }
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status === 200 || xhr.status === 0) { // 0 for local file:// testing
+          updateProgress(100);
+          
+          setTimeout(() => {
+            const videoBlob = xhr.response;
+            const blobUrl = URL.createObjectURL(videoBlob);
+            
+            // Video elementine bağla
+            videoPlayer.src = blobUrl;
+            videoWrapper.classList.add('show');
+            videoPlayer.play();
+
+            // Tamamlandı UI Güncellemesi
+            btnText.textContent = "VİDEO OYNATILIYOR";
+            statusLabel.textContent = "Yükleme Tamamlandı!";
+            statusDot.style.background = "#00ff88";
+            statusDot.style.boxShadow = "0 0 15px #00ff88";
+            statusDot.classList.remove('active');
+          }, 400);
+        } else {
+          handleError("Video Bulunamadı!");
+        }
+      };
+
+      xhr.onerror = function () {
+        // Yerel testlerde veya video.mp4 yoksa hata yönetimi & görsel simülasyon fall-back
+        console.warn("video.mp4 doğrudan okunamadı, animasyon simülasyon moduna geçiyor...");
+        simulateDownload();
+      };
+
+      xhr.send();
+    });
+
+    function updateProgress(percent) {
+      progressFill.style.width = percent + '%';
+      percentText.textContent = '%' + percent;
+    }
+
+    function handleError(msg) {
+      statusLabel.textContent = msg;
+      statusDot.style.background = "#ff0055";
+      statusDot.style.boxShadow = "0 0 15px #ff0055";
+      btnText.textContent = "TEKRAR DENE";
+      isDownloading = false;
+      loadBtn.style.opacity = "1";
+      loadBtn.style.cursor = "pointer";
+    }
+
+    // Klasörde video.mp4 yoksa bile animasyon şovunu görebilmeniz için düşme simülasyonu
+    function simulateDownload() {
+      let current = 0;
+      const interval = setInterval(() => {
+        current += Math.floor(Math.random() * 8) + 2;
+        if (current >= 100) {
+          current = 100;
+          clearInterval(interval);
+          updateProgress(100);
+          setTimeout(() => {
+            statusLabel.textContent = "Simülasyon Tamamlandı (video.mp4 ekleyin)";
+            btnText.textContent = "VİDEO BULUNAMADI";
+            statusDot.style.background = "#ffaa00";
+            statusDot.classList.remove('active');
+          }, 300);
+        } else {
+          updateProgress(current);
+        }
+      }, 150);
+    }
+  </script>
+</body>
+</html
